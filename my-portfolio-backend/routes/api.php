@@ -58,3 +58,5 @@ Route::put('/experiences/{id}', [ExperienceController::class, 'updateExperience'
 Route::delete('/experiences/{id}', [ExperienceController::class, 'deleteExperience']);
 
 Route::apiResource('contacts', ContactController::class);
+
+Route::get('/health', function() { return response()->json(['status' => 'ok']); });

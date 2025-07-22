@@ -1,29 +1,52 @@
+# Use the official PHP image with Apache
 FROM php:8.2-apache
 
+# Set working directory
+WORKDIR /var/www/html
+
+# Install dependencies
 RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    libpng-dev \
     libonig-dev \
-    libzip-dev \
+    libxml2-dev \
     zip \
     unzip \
-    && docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath
+    libzip-dev
 
-RUN mkdir -p /var/www/html/storage /var/www/html/bootstrap/cache
+# Clear cache
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
-COPY composer.json composer.lock /var/www/html/
+# Install PHP extensions
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
 
+# Install composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-WORKDIR /var/www/html
-RUN composer install --no-dev --optimize-autoloader --no-scripts
+# Copy existing application directory contents
+COPY . .
 
-COPY . /var/www/html
+# Install PHP dependencies
+RUN composer install --no-interaction --optimize-autoloader --no-dev
 
-RUN chown -R www-data:www-data /var/www/html/storage \
-    && chmod -R 755 /var/www/html/storage \
-    && chmod -R 755 /var/www/html/bootstrap/cache
+# Copy .env.example to .env (you may need to adjust this)
+COPY .env.example .env
 
-# تكوين Apache
+# Generate application key
+RUN php artisan key:generate
+
+# Set permissions for Laravel storage
+RUN chmod -R 777 storage bootstrap/cache
+
+# Enable Apache rewrite module
 RUN a2enmod rewrite
-COPY 000-default.conf /etc/apache2/sites-available/000-default.conf
 
-RUN composer dump-autoload --optimize
+# Configure Apache
+COPY ./docker/apache.conf /etc/apache2/sites-available/000-default.conf
+
+# Expose port 80
+EXPOSE 80
+
+# Start Apache in foreground
+CMD ["apache2-foreground"]

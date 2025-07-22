@@ -6,6 +6,9 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     && docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath
 
+# إنشاء مجلدات التخزين المطلوبة مسبقاً
+RUN mkdir -p /var/www/html/storage /var/www/html/bootstrap/cache
+
 # نسخ المشروع إلى مجلد الخادم
 COPY . /var/www/html
 

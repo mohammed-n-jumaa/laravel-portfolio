@@ -24,11 +24,14 @@ RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
 # Install composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copy existing application directory contents
-COPY . .
+# Copy composer files first (for better caching)
+COPY composer.json composer.lock ./
 
 # Install PHP dependencies
 RUN composer install --no-interaction --optimize-autoloader --no-dev
+
+# Copy the rest of the application
+COPY . .
 
 # Create .env file if .env.example exists, otherwise create basic .env
 RUN if [ -f .env.example ]; then cp .env.example .env; else \

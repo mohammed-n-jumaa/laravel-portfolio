@@ -24,14 +24,15 @@ RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
 # Install composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copy composer files first (for better caching)
-COPY composer.json composer.lock ./
-
-# Install PHP dependencies
-RUN composer install --no-interaction --optimize-autoloader --no-dev
-
-# Copy the rest of the application
+# Copy existing application directory contents
 COPY . .
+
+# Install PHP dependencies only if composer.json exists
+RUN if [ -f composer.json ]; then \
+    composer install --no-interaction --optimize-autoloader --no-dev; \
+else \
+    echo "No composer.json found, skipping dependency installation"; \
+fi
 
 # Create .env file if .env.example exists, otherwise create basic .env
 RUN if [ -f .env.example ]; then cp .env.example .env; else \
@@ -44,11 +45,12 @@ RUN if [ -f .env.example ]; then cp .env.example .env; else \
     echo "DB_CONNECTION=mysql" >> .env; \
     fi
 
-# Generate application key
-RUN php artisan key:generate
+# Generate application key only if artisan exists
+RUN if [ -f artisan ]; then php artisan key:generate; fi
 
-# Set permissions for Laravel storage
-RUN chmod -R 777 storage bootstrap/cache
+# Set permissions for Laravel directories if they exist
+RUN if [ -d storage ]; then chmod -R 777 storage; fi
+RUN if [ -d bootstrap/cache ]; then chmod -R 777 bootstrap/cache; fi
 
 # Enable Apache rewrite module
 RUN a2enmod rewrite

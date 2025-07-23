@@ -10,7 +10,11 @@ return [
 
     'paths' => ['api/*', 'sanctum/csrf-cookie'],
     'allowed_methods' => ['*'],
-    'allowed_origins' => ['*'], 
+    'allowed_origins' => [
+        'http://localhost:3000',
+        'https://mohammed-nedal.vercel.app', 
+        'https://*.vercel.app',
+    ],
     'allowed_origins_patterns' => [
         '/^https:\/\/.*\.vercel\.app$/', 
     ],
